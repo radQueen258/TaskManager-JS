@@ -2,9 +2,92 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>$Title$</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Task Manager</title>
+  <link rel="stylesheet" href="style.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 </head>
 <body>
-$END$
+<div class="container">
+  <header>
+    <h1>Task Manager</h1>
+    <button id="sync-btn" class="btn sync-btn" title="Sync with server">
+      <i class="fas fa-sync-alt"></i>
+    </button>
+  </header>
+
+  <div class="progress-container">
+    <div class="progress-bar" id="progress-bar"></div>
+    <span id="progress-text">0%</span>
+  </div>
+
+  <div class="controls">
+    <button id="add-task-btn" class="btn primary">Add New Task</button>
+    <div class="filters">
+      <select id="status-filter" class="filter">
+        <option value="all">All Statuses</option>
+        <option value="todo">To Do</option>
+        <option value="in-progress">In Progress</option>
+        <option value="done">Done</option>
+      </select>
+      <select id="priority-filter" class="filter">
+        <option value="all">All Priorities</option>
+        <option value="low">Low</option>
+        <option value="medium">Medium</option>
+        <option value="high">High</option>
+      </select>
+      <input type="text" id="search" class="filter" placeholder="Search tasks...">
+    </div>
+  </div>
+
+  <form id="task-form" class="task-form hidden">
+    <h2>Add New Task</h2>
+    <div class="form-group">
+      <label for="title">Title*</label>
+      <input type="text" id="title" required>
+      <span class="error-message"></span>
+    </div>
+    <div class="form-group">
+      <label for="description">Description</label>
+      <textarea id="description" rows="3"></textarea>
+    </div>
+    <div class="form-group">
+      <label for="due-date">Due Date</label>
+      <input type="datetime-local" id="due-date">
+    </div>
+    <div class="form-group">
+      <label for="priority">Priority</label>
+      <select id="priority">
+        <option value="low">Low</option>
+        <option value="medium" selected>Medium</option>
+        <option value="high">High</option>
+      </select>
+    </div>
+    <div class="form-group">
+      <label for="status">Status</label>
+      <select id="status">
+        <option value="todo">To Do</option>
+        <option value="in-progress">In Progress</option>
+        <option value="done">Done</option>
+      </select>
+    </div>
+    <div class="form-actions">
+      <button type="submit" class="btn primary">Save Task</button>
+      <button type="button" id="cancel-btn" class="btn secondary">Cancel</button>
+    </div>
+  </form>
+
+  <div id="task-list" class="task-list"></div>
+
+  <div id="empty-state" class="empty-state">
+    <i class="fas fa-tasks"></i>
+    <h3>No tasks found</h3>
+    <p>Add a new task to get started</p>
+  </div>
+</div>
+
+<div id="notification" class="notification hidden"></div>
+
+<script src="index.js"></script>
 </body>
 </html>
