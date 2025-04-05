@@ -5,11 +5,48 @@ const express = require('express');
 const bodyParser = require('body-parser');
 const cors = require('cors');
 
+const fs = require('fs');
+const path = require('path');
+
 const app = express();
+const { body, validationResult } = require('express-validator');
+
+// Configure logging
+const logStream = fs.createWriteStream(path.join(__dirname, 'server.log'), { flags: 'a' });
+
+function logRequest(req, res, next) {
+    const timestamp = new Date().toISOString();
+    logStream.write(`${timestamp} - ${req.method} ${req.url}\n`);
+    console.log(`${timestamp} - ${req.method} ${req.url}`);
+    next();
+}
+
+function logError(error, req, res, next) {
+    const timestamp = new Date().toISOString();
+    const logEntry = `${timestamp} - ERROR: ${error.stack || error}\n`;
+    logStream.write(logEntry);
+    console.error(logEntry);
+    next(error);
+}
+
+const validateTask = [
+    body('title').trim().notEmpty().withMessage('Title is required'),
+    body('description').optional().trim(),
+    body('dueDate').optional().isISO8601().withMessage('Invalid date format'),
+    body('priority').isIn(['low', 'medium', 'high']).withMessage('Invalid priority'),
+    body('status').isIn(['todo', 'in-progress', 'done']).withMessage('Invalid status'),
+    (req, res, next) => {
+        const errors = validationResult(req);
+        if (!errors.isEmpty()) {
+            return res.status(400).json({ errors: errors.array() });
+        }
+        next();
+    }
+];
 
 // Enhanced CORS configuration
 app.use(cors({
-    origin: ['http://localhost', 'http://127.0.0.1'], // Add your client URLs here
+    origin: ['http://localhost', 'http://127.0.0.1'],
     methods: ['GET', 'POST', 'PUT', 'DELETE'],
     allowedHeaders: ['Content-Type']
 }));
@@ -25,7 +62,7 @@ app.listen(PORT, '0.0.0.0', () => {
     console.log(`Mock server running on http://localhost:${PORT}`);
 });
 
-// let tasks = [];
+app.use(logRequest);
 
 // Get all tasks
 app.get('/api/tasks', (req, res) => {
@@ -33,7 +70,7 @@ app.get('/api/tasks', (req, res) => {
 });
 
 // Create a new task
-app.post('/api/tasks', (req, res) => {
+app.post('/api/tasks', validateTask,(req, res) => {
     const task = {
         id: Date.now().toString(),
         ...req.body,
@@ -44,7 +81,7 @@ app.post('/api/tasks', (req, res) => {
 });
 
 // Update a task
-app.put('/api/tasks/:id', (req, res) => {
+app.put('/api/tasks/:id',validateTask, (req, res) => {
     const taskId = req.params.id;
     const taskIndex = tasks.findIndex(t => t.id === taskId);
 
@@ -69,7 +106,8 @@ app.post('/api/tasks/sync', (req, res) => {
     res.json(tasks);
 });
 
-// const PORT = 3001;
+app.use(logError);
+
 app.listen(PORT, () => {
     console.log(`Mock server running on http://localhost:${PORT}`);
 });

@@ -1,14 +1,54 @@
 // Task Manager Application
-// Add this at the start of syncWithServer
-
 class TaskManager {
     constructor() {
+        this.initLogger();
         this.tasks = [];
         this.currentEditId = null;
         this.initElements();
         this.initEventListeners();
         this.loadTasks();
         this.updateUI();
+    }
+
+    initLogger() {
+        this.logger = {
+            log: (message, data) => {
+                console.log(`[LOG] ${message}`, data);
+            },
+            error: (message, error) => {
+                console.error(`[ERROR] ${message}`, error);
+                // Send error reports to server
+                this.sendErrorToServer(message, error);
+            }
+        };
+    }
+
+    async sendErrorToServer(message, error) {
+        try {
+            await fetch('/api/logs', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    message,
+                    error: error.toString(),
+                    stack: error.stack,
+                    timestamp: new Date().toISOString(),
+                    url: window.location.href
+                })
+            });
+        } catch (e) {
+            console.error('Failed to send error log:', e);
+        }
+    }
+
+    async syncWithServer() {
+        try {
+            this.logger.log('Starting sync with server');
+            // ... sync logic
+        } catch (error) {
+            this.logger.error('Sync failed', error);
+            // ... error handling
+        }
     }
 
 
@@ -64,19 +104,19 @@ class TaskManager {
             const task = this.tasks.find(t => t.id === taskId);
             if (!task) return;
 
-            // Handle status toggle
+            // status toggle
             if (e.target.closest('.status-btn')) {
                 this.toggleTaskStatus(task);
                 return;
             }
 
-            // Handle edit
+            //edit
             if (e.target.closest('.edit-btn')) {
                 this.editTask(task);
                 return;
             }
 
-            // Handle delete
+            // delete
             if (e.target.closest('.delete-btn')) {
                 this.deleteTask(task.id);
                 return;
@@ -127,7 +167,7 @@ class TaskManager {
         this.titleInput.value = task.title;
         this.descriptionInput.value = task.description || '';
 
-        // Properly handle date formatting for the input
+        // handle date formatting for the input
         if (task.dueDate) {
             const date = new Date(task.dueDate);
             const formattedDate = date.toISOString().slice(0, 16);
@@ -395,12 +435,14 @@ class TaskManager {
     }
 
     escapeHtml(unsafe) {
-        return unsafe
+        if (!unsafe) return '';
+        return unsafe.toString()
             .replace(/&/g, "&amp;")
             .replace(/</g, "&lt;")
             .replace(/>/g, "&gt;")
             .replace(/"/g, "&quot;")
-            .replace(/'/g, "&#039;");
+            .replace(/'/g, "&#x27;")
+            .replace(/\//g, "&#x2F;");
     }
 
     showNotification(message, type = 'info') {
